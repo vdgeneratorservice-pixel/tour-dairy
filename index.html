@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tour Diary</title>
+<style>html{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style>
+
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: field-officer logbook — entry form on the left, the month's diary sheet on the right; stacks on phones */
+:root{
+  --bg:#eef1f4; --paper:#ffffff; --ink:#18232e; --muted:#5b6b7a; --line:#d3dbe3; --line-soft:#e6ebf0;
+  --accent:#1f5f8b; --accent-ink:#ffffff; --accent-soft:#e1edf6; --danger:#b3362b; --danger-soft:#fbeae8; --ok:#2c7a4b; --ok-soft:#e3f3ea;
+  --head:#f4f7fa;
+  --f-display:"Archivo Narrow","Arial Narrow",Arial,sans-serif;
+  --f-body:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f151b; --paper:#172029; --ink:#e4eaf0; --muted:#93a3b2; --line:#2c3a47; --line-soft:#223039;
+  --accent:#6fb0de; --accent-ink:#0b1720; --accent-soft:#1b3346; --danger:#ef7d72; --danger-soft:#3a1f1d; --ok:#6fcf98; --ok-soft:#173226;
+  --head:#1c2731; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f151b; --paper:#172029; --ink:#e4eaf0; --muted:#93a3b2; --line:#2c3a47; --line-soft:#223039;
+  --accent:#6fb0de; --accent-ink:#0b1720; --accent-soft:#1b3346; --danger:#ef7d72; --danger-soft:#3a1f1d; --ok:#6fcf98; --ok-soft:#173226;
+  --head:#1c2731; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1280px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:20px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;border-bottom:2px solid var(--ink);padding-bottom:12px}
+h1{font-family:var(--f-display);font-weight:700;font-size:30px;line-height:1.1;margin:0;letter-spacing:.01em;text-wrap:balance}
+.officer{display:flex;flex-wrap:wrap;gap:4px 18px;color:var(--muted);font-size:14px;margin-top:4px}
+.officer b{color:var(--ink);font-weight:600}
+.status{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.on{background:var(--ok)} .dot.warn{background:var(--danger)}
+.grid{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:6px;min-width:0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.panel-h h2{font-family:var(--f-display);font-size:18px;font-weight:700;margin:0;letter-spacing:.02em}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+form{padding:16px;display:grid;gap:14px}
+fieldset{border:0;margin:0;padding:0;display:grid;gap:6px;min-width:0}
+legend{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding:0;margin-bottom:6px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:grid;gap:4px;font-size:13px;font-weight:500;min-width:0}
+input,textarea,select{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:64px}
+input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.km input{font-family:var(--f-mono)}
+.err{color:var(--danger);font-size:13px;min-height:1em}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;font-weight:600;font-size:14px;border-radius:4px;padding:8px 14px;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.danger{color:var(--danger);border-color:var(--danger)}
+button.danger.solid{background:var(--danger);color:var(--paper)}
+button.small{padding:4px 10px;font-size:13px;font-weight:500}
+button:disabled{opacity:.5;cursor:not-allowed}
+.editing-banner{background:var(--accent-soft);color:var(--ink);font-size:13px;padding:8px 10px;border-radius:4px}
+.toolbar{display:flex;flex-wrap:wrap;align-items:end;gap:10px 14px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.toolbar label{width:auto}
+.toolbar .grow{flex:1 1 180px}
+.stats{display:flex;flex-wrap:wrap;gap:0;border-bottom:1px solid var(--line)}
+.stat{flex:1 1 120px;padding:12px 16px;border-right:1px solid var(--line-soft)}
+.stat:last-child{border-right:0}
+.stat .v{font-family:var(--f-mono);font-size:22px;font-weight:500;font-variant-numeric:tabular-nums}
+.sheet-title{padding:14px 16px 4px;font-family:var(--f-display);font-weight:600;font-size:16px;text-wrap:balance}
+.tablebox{overflow-x:auto;padding:8px 16px 16px}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:14px}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+thead th{background:var(--head);font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:center}
+td.num,td.t{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.num{text-align:right}
+td.d{white-space:nowrap;font-weight:500}
+tr.editing td{background:var(--accent-soft)}
+tfoot td{font-weight:700;background:var(--head)}
+td.ops{white-space:nowrap;width:1%}
+.ops .row{display:flex;gap:6px}
+.confirm{font-size:13px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.empty{padding:40px 16px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+details.profile{border-top:1px solid var(--line)}
+details.profile summary{padding:12px 16px;cursor:pointer;font-weight:600;font-size:14px}
+details.profile .body{padding:0 16px 16px;display:grid;gap:10px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:4px;font-size:14px;z-index:20}
+.note{font-size:13px;color:var(--muted);padding:0 16px 14px}
+@media print{
+  @page{size:A4 landscape;margin:12mm}
+  :root{--bg:#fff;--paper:#fff;--ink:#000;--muted:#333;--line:#555;--line-soft:#555;--head:#eee}
+  body{background:#fff;font-size:12px}
+  header.top,.grid>section:first-child,.toolbar,.stats,.panel-h,.note,.toast,td.ops,th.act,tfoot td.act{display:none!important}
+  thead th{text-transform:none;font-size:12px;color:#000}
+  .wrap{padding:0;max-width:none}.grid{display:block}.panel{border:0}
+  .sheet-title{text-align:center;font-size:15px;padding:0 0 8px}
+  .tablebox{overflow:visible;padding:0}table{min-width:0;font-size:12px}
+  .sign{display:flex!important}
+}
+.sign{display:none;justify-content:space-between;margin-top:48px;font-size:13px}
+@media (prefers-reduced-motion:no-preference){button{transition:border-color .15s}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Tour Diary Copy</div>
+      <h1 id="hTitle">Tour Diary</h1>
+      <div class="officer" id="officerLine"></div>
+    </div>
+    <div class="status"><span class="dot" id="dot"></span><span id="statusText">Connecting to saved diary…</span></div>
+  </header>
+
+  <div class="grid">
+    <!-- ENTRY FORM -->
+    <section class="panel" aria-labelledby="formTitle">
+      <div class="panel-h"><h2 id="formTitle">New entry</h2><span class="eyebrow" id="formMode">Add journey</span></div>
+      <form id="entryForm" novalidate>
+        <div class="editing-banner" id="editBanner" hidden></div>
+        <label>Date<input type="date" id="fDate" required></label>
+        <fieldset><legend>Time</legend>
+          <div class="pair">
+            <label>From<input type="time" id="fTimeFrom"></label>
+            <label>To<input type="time" id="fTimeTo"></label>
+          </div>
+        </fieldset>
+        <fieldset><legend>Place of visit</legend>
+          <div class="pair">
+            <label>From<input type="text" id="fPlaceFrom" list="placeList" autocomplete="off" required></label>
+            <label>To<input type="text" id="fPlaceTo" list="placeList" autocomplete="off" required></label>
+          </div>
+          <datalist id="placeList"></datalist>
+        </fieldset>
+        <label class="km">No. of Km's<input type="number" id="fKm" min="0" step="0.1" inputmode="decimal"></label>
+        <label>Purpose of journey<textarea id="fPurpose" list="purposeList"></textarea></label>
+        <div class="err" id="formErr" role="alert"></div>
+        <div class="actions">
+          <button type="submit" class="primary" id="saveBtn">Save entry</button>
+          <button type="button" id="cancelBtn" hidden>Cancel edit</button>
+          <button type="button" id="clearBtn">Clear</button>
+        </div>
+      </form>
+      <details class="profile" id="profileBox">
+        <summary>Officer details</summary>
+        <div class="body">
+          <label>Name<input type="text" id="pName"></label>
+          <label>Designation<input type="text" id="pDesig"></label>
+          <label>Badge No.<input type="text" id="pBadge"></label>
+          <div class="actions"><button type="button" id="pSave">Save details</button></div>
+          <div class="eyebrow" style="margin-top:6px">Backup (entries are kept in this browser)</div>
+          <div class="actions"><button type="button" id="backupBtn">Download backup</button><button type="button" id="restoreBtn">Restore backup</button><input type="file" id="restoreFile" accept=".json,application/json" hidden></div>
+        </div>
+      </details>
+    </section>
+
+    <!-- REPORT -->
+    <section class="panel" aria-labelledby="repTitle">
+      <div class="panel-h"><h2 id="repTitle">Monthly report</h2><span class="eyebrow">Click Edit on any row</span></div>
+      <div class="toolbar">
+        <label>Month<input type="month" id="rMonth"></label>
+        <label class="grow">Search<input type="search" id="rSearch" placeholder="Place or purpose"></label>
+        <button type="button" class="primary" id="browserPrintBtn">Print</button>
+        <button type="button" id="printBtn">Download PDF</button>
+        <button type="button" id="csvBtn">Export CSV (Excel)</button>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="eyebrow">Journeys</div><div class="v" id="sCount">0</div></div>
+        <div class="stat"><div class="eyebrow">Days on tour</div><div class="v" id="sDays">0</div></div>
+        <div class="stat"><div class="eyebrow">Total Km</div><div class="v" id="sKm">0</div></div>
+      </div>
+      <div class="sheet-title" id="sheetTitle"></div>
+      <div id="reportArea"></div>
+      <p class="note" id="storeNote" hidden></p>
+      <div class="sign"><div>Signature of the Officer<br><span id="signName"></span></div><div>Countersigned by</div></div>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const DEFAULT_PROFILE={name:"B Bangarunaidu",designation:"Sr.Supervisor(f.o)",badgeNo:"2282"};
+  let entries=[];            // {id,date,timeFrom,timeTo,placeFrom,placeTo,km,purpose}
+  let profile={...DEFAULT_PROFILE};
+  let editingId=null, confirmId=null;
+  let db=null, local=false, canWrite=true;
+
+  // ---------- helpers ----------
+  const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const pad=n=>String(n).padStart(2,"0");
+  function today(){const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+  function fmtDate(s){if(!s)return"";const[y,m,d]=s.split("-");return d+"-"+m+"-"+y}
+  function fmtTime(t){if(!t)return"";let[h,m]=t.split(":").map(Number);const ap=h>=12?"PM":"AM";h=h%12||12;return pad(h)+":"+pad(m)+" "+ap}
+  function monthLabel(ym){if(!ym)return"";const[y,m]=ym.split("-");return MONTHS[+m-1]+"-"+y}
+  function fmtKm(n){const v=Number(n)||0;return v%1===0?String(v):v.toFixed(1)}
+  function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+  let toastT;function toast(msg){const t=$("toast");t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2400)}
+  function setStatus(kind,text){$("dot").className="dot "+kind;$("statusText").textContent=text}
+  function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+
+  // ---------- local fallback ----------
+  function loadLocal(){try{const r=JSON.parse(localStorage.getItem("tourDiary")||"null");if(r){entries=r.entries||[];profile={...DEFAULT_PROFILE,...(r.profile||{})}}}catch(e){}}
+  function saveLocal(){try{localStorage.setItem("tourDiary",JSON.stringify({entries,profile}))}catch(e){}}
+
+  // ---------- persistence ----------
+  async function putEntry(e){
+    if(local){const i=entries.findIndex(x=>x.id===e.id);if(i>=0)entries[i]=e;else entries.push(e);saveLocal();render();return}
+    const {id,...body}=e;await db.collection("trips").doc(id).set(body);
+  }
+  async function removeEntry(id){
+    if(local){entries=entries.filter(x=>x.id!==id);saveLocal();render();return}
+    await db.collection("trips").doc(id).delete();
+  }
+  async function putProfile(p){
+    if(local){profile=p;saveLocal();render();return}
+    await db.doc("settings/profile").set(p);
+  }
+
+  // ---------- form ----------
+  function fillForm(e){
+    $("fDate").value=e?.date||today();$("fTimeFrom").value=e?.timeFrom||"";$("fTimeTo").value=e?.timeTo||"";
+    $("fPlaceFrom").value=e?.placeFrom||"";$("fPlaceTo").value=e?.placeTo||"";$("fKm").value=e?.km??"";$("fPurpose").value=e?.purpose||"";
+    $("formErr").textContent="";
+  }
+  function setEditMode(e){
+    editingId=e?e.id:null;
+    $("formTitle").textContent=e?"Edit entry":"New entry";
+    $("formMode").textContent=e?"Editing":"Add journey";
+    $("saveBtn").textContent=e?"Update entry":"Save entry";
+    $("cancelBtn").hidden=!e;
+    $("editBanner").hidden=!e;
+    if(e)$("editBanner").textContent="Editing the journey of "+fmtDate(e.date)+" ("+e.placeFrom+" → "+e.placeTo+"). Change any field and press Update.";
+    fillForm(e);render();
+  }
+  $("entryForm").addEventListener("submit",async ev=>{
+    ev.preventDefault();
+    const e={id:editingId||newId(),date:$("fDate").value,timeFrom:$("fTimeFrom").value,timeTo:$("fTimeTo").value,
+      placeFrom:$("fPlaceFrom").value.trim(),placeTo:$("fPlaceTo").value.trim(),km:$("fKm").value===""?0:Number($("fKm").value),purpose:$("fPurpose").value.trim()};
+    const err=!e.date?"Enter the date of the journey.":!e.placeFrom||!e.placeTo?"Enter both the From and To places.":
+      e.km<0||isNaN(e.km)?"Km can't be negative.":(e.timeFrom&&e.timeTo&&e.timeTo<e.timeFrom)?"The To time is earlier than the From time. Check the times.":"";
+    if(err){$("formErr").textContent=err;return}
+    if(!canWrite){$("formErr").textContent="You have view-only access to this diary, so entries can't be saved.";return}
+    const wasEdit=!!editingId;$("saveBtn").disabled=true;
+    try{await putEntry(e);toast(wasEdit?"Entry updated":"Entry saved");
+      const ym=e.date.slice(0,7);if($("rMonth").value!==ym){$("rMonth").value=ym}
+      if(wasEdit)setEditMode(null);else{const keepDate=e.date,keepFrom=e.placeTo;fillForm(null);$("fDate").value=keepDate;$("fPlaceFrom").value=keepFrom;render()}
+    }catch(x){$("formErr").textContent=x&&x.code==="quota_exceeded"?"The diary is full. Delete old entries and try again.":"Couldn't save. Check your connection and try again."}
+    finally{$("saveBtn").disabled=false}
+  });
+  $("cancelBtn").onclick=()=>setEditMode(null);
+  $("clearBtn").onclick=()=>{fillForm(editingId?entries.find(x=>x.id===editingId):null)};
+
+  // ---------- profile ----------
+  $("pSave").onclick=async()=>{
+    const p={name:$("pName").value.trim(),designation:$("pDesig").value.trim(),badgeNo:$("pBadge").value.trim()};
+    try{await putProfile(p);toast("Officer details saved")}catch(e){toast("Couldn't save details")}
+  };
+
+  // ---------- report ----------
+  function visible(){
+    const ym=$("rMonth").value,q=$("rSearch").value.trim().toLowerCase();
+    return entries.filter(e=>(!ym||e.date.startsWith(ym))&&(!q||[e.placeFrom,e.placeTo,e.purpose].join(" ").toLowerCase().includes(q)))
+      .sort((a,b)=>(a.date+a.timeFrom).localeCompare(b.date+b.timeFrom));
+  }
+  function render(){
+    // header
+    $("officerLine").innerHTML="<span>Name <b>"+esc(profile.name||"—")+"</b></span><span>Designation <b>"+esc(profile.designation||"—")+"</b></span><span>B.No <b>"+esc(profile.badgeNo||"—")+"</b></span>";
+    if(document.activeElement?.closest?.("#profileBox")==null){$("pName").value=profile.name||"";$("pDesig").value=profile.designation||"";$("pBadge").value=profile.badgeNo||""}
+    const ym=$("rMonth").value;
+    $("sheetTitle").textContent="Tour Diary Copy of "+(profile.name||"…")+", "+(profile.designation||"")+(profile.badgeNo?", B.No:- "+profile.badgeNo:"")+(ym?" for the Month of "+monthLabel(ym):"");
+    // datalist
+    const places=[...new Set(entries.flatMap(e=>[e.placeFrom,e.placeTo]).filter(Boolean))].sort();
+    $("placeList").innerHTML=places.map(p=>"<option value=\""+esc(p)+"\">").join("");
+    // rows
+    const rows=visible();
+    const total=rows.reduce((s,e)=>s+(Number(e.km)||0),0);
+    $("sCount").textContent=rows.length;$("sDays").textContent=new Set(rows.map(e=>e.date)).size;$("sKm").textContent=fmtKm(total);
+    if(!rows.length){
+      const any=entries.length;
+      $("reportArea").innerHTML="<div class=\"empty\"><b>"+(any?"No journeys match":"No journeys for "+esc(monthLabel(ym)||"this month")+" yet")+"</b>"+(any?"Try another month or clear the search.":"Fill in the entry form to add the first journey. It will appear here as a row of the diary.")+"</div>";
+      return;
+    }
+    let h="<div class=\"tablebox\"><table><thead><tr><th rowspan=\"2\">Date</th><th colspan=\"2\">Time</th><th colspan=\"2\">Place of Visit</th><th rowspan=\"2\">No. of Km's</th><th rowspan=\"2\">Purpose of Journey</th><th rowspan=\"2\" class=\"act\">Action</th></tr><tr><th>From</th><th>To</th><th>From</th><th>To</th></tr></thead><tbody>";
+    for(const e of rows){
+      const ops=confirmId===e.id
+        ?"<div class=\"confirm\">Delete?<button class=\"small danger solid\" data-act=\"del-yes\" data-id=\""+e.id+"\">Delete</button><button class=\"small\" data-act=\"del-no\">Keep</button></div>"
+        :"<div class=\"row\"><button class=\"small\" data-act=\"edit\" data-id=\""+e.id+"\">Edit</button><button class=\"small danger\" data-act=\"del\" data-id=\""+e.id+"\">Delete</button></div>";
+      h+="<tr"+(editingId===e.id?" class=\"editing\"":"")+"><td class=\"d\">"+fmtDate(e.date)+"</td><td class=\"t\">"+fmtTime(e.timeFrom)+"</td><td class=\"t\">"+fmtTime(e.timeTo)+"</td><td>"+esc(e.placeFrom)+"</td><td>"+esc(e.placeTo)+"</td><td class=\"num\">"+fmtKm(e.km)+"</td><td>"+esc(e.purpose)+"</td><td class=\"ops\">"+(canWrite?ops:"")+"</td></tr>";
+    }
+    h+="</tbody><tfoot><tr><td colspan=\"5\" style=\"text-align:right\">Total</td><td class=\"num\">"+fmtKm(total)+"</td><td></td><td class=\"act\"></td></tr></tfoot></table></div>";
+    $("reportArea").innerHTML=h;
+  }
+  $("reportArea").addEventListener("click",async ev=>{
+    const b=ev.target.closest("button[data-act]");if(!b)return;const id=b.dataset.id,act=b.dataset.act;
+    if(act==="edit"){confirmId=null;setEditMode(entries.find(x=>x.id===id));$("entryForm").scrollIntoView({behavior:"smooth",block:"start"});$("fDate").focus({preventScroll:true})}
+    else if(act==="del"){confirmId=id;render()}
+    else if(act==="del-no"){confirmId=null;render()}
+    else if(act==="del-yes"){confirmId=null;if(editingId===id)setEditMode(null);try{await removeEntry(id);toast("Entry deleted")}catch(e){toast("Couldn't delete. Try again.")}}
+  });
+  $("rMonth").addEventListener("input",render);
+  $("rSearch").addEventListener("input",render);
+
+  async function saveFile(name,data,type){
+    const dl=window.claude?await window.claude.use("downloads"):null;
+    if(dl){await dl.save({filename:name,data});return}
+    const blob=data instanceof Blob?data:new Blob([data],{type});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+  }
+  $("browserPrintBtn").onclick=()=>{
+    if(!visible().length){toast("No journeys to print for this month");return}
+    $("signName").textContent=(profile.name||"")+(profile.designation?", "+profile.designation:"");window.print();
+  };
+  $("backupBtn").onclick=async()=>{try{await saveFile("Tour_Diary_backup_"+today()+".json",JSON.stringify({entries,profile},null,1),"application/json");toast("Backup downloaded")}catch(e){if(e?.code!=="declined")toast("Couldn't download the backup")}};
+  $("restoreBtn").onclick=()=>$("restoreFile").click();
+  $("restoreFile").onchange=async ev=>{
+    const f=ev.target.files[0];if(!f)return;
+    try{const r=JSON.parse(await f.text());if(!Array.isArray(r.entries))throw 0;
+      const have=new Set(entries.map(x=>x.id));let n=0;
+      for(const e of r.entries){if(e&&e.id&&e.date&&!have.has(e.id)){await putEntry(e);n++}}
+      if(r.profile&&!local)await putProfile({...profile,...r.profile});else if(r.profile){profile={...profile,...r.profile};saveLocal()}
+      render();toast(n+" entries restored")}catch(e){toast("That file isn't a Tour Diary backup")}
+    ev.target.value="";
+  };
+
+  // ---------- CSV export ----------
+  $("csvBtn").onclick=async()=>{
+    const rows=visible();const q=v=>"\""+String(v??"").replace(/"/g,'""')+"\"";
+    const lines=[[q($("sheetTitle").textContent)].join(","),["Date","Time From","Time To","Place From","Place To","No.of Km's","Purpose of Journey"].map(q).join(",")];
+    rows.forEach(e=>lines.push([fmtDate(e.date),fmtTime(e.timeFrom),fmtTime(e.timeTo),e.placeFrom,e.placeTo,fmtKm(e.km),e.purpose].map(q).join(",")));
+    lines.push(["","","","","Total",fmtKm(rows.reduce((s,e)=>s+(Number(e.km)||0),0)),""].map(q).join(","));
+    const name="Tour_Diary_"+(monthLabel($("rMonth").value)||"all")+".csv";
+    try{await saveFile(name,"﻿"+lines.join("\r\n"),"text/csv;charset=utf-8")}catch(e){if(e?.code!=="declined")toast("Couldn't export the file")}
+  };
+
+  // ---------- Print (PDF) ----------
+  $("printBtn").onclick=async()=>{
+    const rows=visible();
+    if(!rows.length){toast("No journeys to print for this month");return}
+    if(!window.jspdf){toast("The PDF maker didn't load. Check your connection and reload.");return}
+    const {jsPDF}=window.jspdf;const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+    const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();
+    doc.setFont("helvetica","bold");doc.setFontSize(13);
+    doc.text(doc.splitTextToSize($("sheetTitle").textContent,W-28),W/2,16,{align:"center"});
+    const total=rows.reduce((s,e)=>s+(Number(e.km)||0),0);
+    doc.autoTable({
+      startY:24,margin:{left:14,right:14},theme:"grid",
+      styles:{font:"helvetica",fontSize:9.5,cellPadding:2,lineColor:[60,60,60],lineWidth:.2,textColor:[20,20,20],valign:"top"},
+      headStyles:{fillColor:[235,235,235],textColor:[20,20,20],fontStyle:"bold",halign:"center",valign:"middle"},
+      footStyles:{fillColor:[235,235,235],textColor:[20,20,20],fontStyle:"bold"},
+      head:[[{content:"Date",rowSpan:2},{content:"Time",colSpan:2},{content:"Place of Visit",colSpan:2},{content:"No.of Km's",rowSpan:2},{content:"Purpose of Journey",rowSpan:2}],["From","To","From","To"]],
+      body:rows.map(e=>[fmtDate(e.date),fmtTime(e.timeFrom),fmtTime(e.timeTo),e.placeFrom,e.placeTo,fmtKm(e.km),e.purpose]),
+      foot:[[{content:"Total",colSpan:5,styles:{halign:"right"}},{content:fmtKm(total),styles:{halign:"right"}},""]],
+      columnStyles:{0:{cellWidth:24},1:{cellWidth:22},2:{cellWidth:22},3:{cellWidth:38},4:{cellWidth:38},5:{cellWidth:22,halign:"right"},6:{cellWidth:"auto"}},
+      didDrawPage:d=>{doc.setFont("helvetica","normal");doc.setFontSize(8);doc.text("Page "+doc.internal.getNumberOfPages(),W-14,H-8,{align:"right"})}
+    });
+    let y=doc.lastAutoTable.finalY+22;if(y>H-20){doc.addPage();y=40}
+    doc.setFont("helvetica","normal");doc.setFontSize(10);
+    doc.text("Signature of the Officer",14,y);doc.text("Countersigned by",W-14,y,{align:"right"});
+    doc.setFontSize(9);doc.text((profile.name||"")+(profile.designation?", "+profile.designation:""),14,y+5);
+    const name="Tour_Diary_"+(monthLabel($("rMonth").value)||"all")+".pdf";
+    try{await saveFile(name,doc.output("blob"),"application/pdf");toast("PDF downloaded")}catch(e){if(e?.code!=="declined")toast("Couldn't make the PDF")}
+  };
+
+  // ---------- boot ----------
+  $("rMonth").value=today().slice(0,7);
+  fillForm(null);render();
+
+  async function start(){
+    db=window.claude?await window.claude.use("db"):null;
+    if(!db){
+      local=true;loadLocal();render();setStatus("warn","Saved in this browser only");
+      $("storeNote").hidden=false;$("storeNote").textContent="Entries are saved in this browser on this device. Use Officer details → Download backup regularly, and Restore backup to move them to another device.";return;
+    }
+    try{const u=await window.claude.use("user");const c=u?await u.can("data.write"):null;if(c===false){canWrite=false;setStatus("on","View only");$("saveBtn").disabled=true;$("pSave").disabled=true}}catch(e){}
+    let loaded=false;const timer=setTimeout(()=>{if(!loaded)setStatus("warn","Can't reach the saved diary yet")},10000);
+    db.collection("trips").onSnapshot(snap=>{
+      entries=snap.docs.map(d=>({id:d.id,...d.data()}));
+      if(!snap.metadata.fromCache){loaded=true;clearTimeout(timer);if(canWrite)setStatus("on","Saved · synced")}
+      render();
+    },err=>{clearTimeout(timer);setStatus("warn","Couldn't load entries")});
+    db.doc("settings/profile").onSnapshot(s=>{profile=s.exists?{...DEFAULT_PROFILE,...s.data()}:{...DEFAULT_PROFILE};render()},()=>{});
+  }
+  start();
+})();
+</script>
+
+</body>
+</html>
